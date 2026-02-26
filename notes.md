@@ -1096,4 +1096,21 @@ When you want to change or add FAQ answers:
 
 ---
 
+---
+
+## Quick Reference — Running the Project
+
+| Step | What it does |
+|---|---|
+| **Immediate** | Run tests with no setup — `uv run pytest` |
+| **Step 1** | Fill in `.env` with all required keys |
+| **Step 2** | Start PostgreSQL via Docker — `docker compose up db -d` |
+| **Step 3** | Load FAQ CSV into ChromaDB — `uv run python -m app.scripts.load_knowledge` |
+| **Step 4** | Start the FastAPI server — `uv run uvicorn app.main:app --reload` |
+| **Step 5** | Expose locally with ngrok — `ngrok http 8000` |
+| **Step 6** | Connect Facebook Messenger in Meta Developer dashboard |
+| **Step 7** | Connect Instagram Business account to Meta App |
+| **Step 8** | Connect Email via SendGrid Inbound Parse (requires deployment) |
+| **Step 9** | Deploy to Railway for production HTTPS URL |
+
 *This notes file is updated as the project progresses. See `specs/main/plan.md` for the full architecture and `specs/main/tasks.md` for implementation tasks.*
