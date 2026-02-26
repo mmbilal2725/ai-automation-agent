@@ -23,6 +23,7 @@
 13. [Step 9: Deployment](#13-step-9-deployment)
 14. [Key Patterns Reference](#14-key-patterns-reference)
 15. [Common Mistakes to Avoid](#15-common-mistakes-to-avoid)
+16. [Running the Project — Step-by-Step](#16-running-the-project--step-by-step)
 
 ---
 
@@ -903,6 +904,195 @@ Railway auto-generates a public HTTPS URL like `https://yourapp.up.railway.app`.
 8. **Hardcoding the confidence threshold** — put it in `.env` so you can tune it without redeploying
 9. **Responding with "I don't know" and stopping** — always offer an escalation path when the agent can't help
 10. **Single-channel testing** — test all three channels independently; they have subtle format differences
+
+---
+
+---
+
+## 16. Running the Project — Step-by-Step
+
+This section tells you exactly what you can run right now vs. what needs external setup first.
+
+### What's ready immediately (no accounts needed)
+
+```bash
+# Run the full test suite — works with no external services
+uv run pytest -v
+```
+
+All 48 tests pass instantly. This confirms your code and dependencies are correctly installed.
+
+---
+
+### Step 1 — Fill in your `.env` file
+
+Your `.env` currently only has `OPENAI_API_KEY` set. Open it and add the remaining values:
+
+```env
+# Already set
+OPENAI_API_KEY=sk-...
+
+# Choose any random string — you will paste this into the Meta dashboard
+META_VERIFY_TOKEN=my_secret_token_123
+
+# From: developers.facebook.com → Your App → Settings → Basic
+META_APP_SECRET=xxxxxxxxxxxxxxxx
+
+# From: developers.facebook.com → Your App → Messenger → Page Access Tokens
+META_PAGE_ACCESS_TOKEN=EAAxxxxxxxxxxxxxxxx
+
+# From: sendgrid.com → Settings → API Keys
+SENDGRID_API_KEY=SG.xxxxxxxxxxxxxxxx
+SENDGRID_FROM_EMAIL=support@yourdomain.com
+
+# Leave exactly as shown for local Docker setup
+DATABASE_URL=postgresql+asyncpg://agent:agent@localhost:5432/agent_db
+
+# Write your business name and tone here
+BRAND_VOICE_PROMPT=You are a friendly customer service agent for [Your Business Name]. Be concise, helpful, and warm.
+```
+
+---
+
+### Step 2 — Start PostgreSQL (Docker)
+
+```bash
+docker compose up db -d
+```
+
+This starts a PostgreSQL container. The app will create its tables automatically on first run.
+
+---
+
+### Step 3 — Load your FAQ knowledge base
+
+Edit `data/faq.csv` with your own questions and answers (the file has 20 sample entries to get you started), then run:
+
+```bash
+uv run python -m app.scripts.load_knowledge
+```
+
+This reads the CSV, generates embeddings via OpenAI, and stores them in ChromaDB at `./chroma_db/`. **You only need to re-run this when your FAQs change.**
+
+---
+
+### Step 4 — Start the server
+
+```bash
+uv run uvicorn app.main:app --reload --port 8000
+```
+
+The API is now live. Open your browser:
+- **API docs (interactive)**: `http://localhost:8000/docs`
+- **Health check**: `http://localhost:8000/health`
+
+---
+
+### Step 5 — Expose your local server for Meta webhooks
+
+Meta needs a public HTTPS URL to send webhooks to your local machine. Use ngrok:
+
+```bash
+# Install ngrok from https://ngrok.com then run:
+ngrok http 8000
+```
+
+Copy the HTTPS URL it gives you (e.g. `https://abc123.ngrok-free.app`). You'll use this in the next step.
+
+---
+
+### Step 6 — Connect Facebook Messenger
+
+1. Go to [developers.facebook.com](https://developers.facebook.com)
+2. Create a new App → choose **Business** type
+3. Add the **Messenger** product
+4. Under Webhooks → **Add Callback URL**:
+   - URL: `https://abc123.ngrok-free.app/webhooks/messenger`
+   - Verify Token: paste your `META_VERIFY_TOKEN` value from `.env`
+5. Subscribe to the `messages` event
+6. Connect a Facebook Page and generate a **Page Access Token** → paste it into `META_PAGE_ACCESS_TOKEN` in `.env`
+7. Restart the server
+
+Test it: send a message to your Facebook Page. The agent will reply.
+
+---
+
+### Step 7 — Connect Instagram
+
+1. In the same Meta App, add the **Instagram** product
+2. Connect your Instagram Business account to a Facebook Page
+3. Under Webhooks → **Add Callback URL**:
+   - URL: `https://abc123.ngrok-free.app/webhooks/instagram`
+   - Verify Token: same `META_VERIFY_TOKEN`
+4. Subscribe to `messages`
+
+Instagram uses the same `META_PAGE_ACCESS_TOKEN` — no extra token needed.
+
+---
+
+### Step 8 — Connect Email (SendGrid)
+
+1. Sign up at [sendgrid.com](https://sendgrid.com)
+2. Go to **Settings → Inbound Parse → Add Host & URL**:
+   - Host: your email domain (e.g. `mail.yourdomain.com`)
+   - URL: `https://your-deployed-url.com/webhooks/email`
+3. Update your domain DNS MX records to point to SendGrid (instructions in the SendGrid dashboard)
+4. Set `SENDGRID_API_KEY` and `SENDGRID_FROM_EMAIL` in `.env`
+
+Note: Email requires a real deployed URL (not ngrok) because MX records need a permanent address. Deploy first (see Step 9), then set this up.
+
+---
+
+### Step 9 — Deploy to production (Railway)
+
+```bash
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Login and initialise
+railway login
+railway init
+
+# Add PostgreSQL
+railway add --database postgresql
+
+# Deploy
+railway up
+
+# Set environment variables
+railway variables set OPENAI_API_KEY=sk-...
+railway variables set META_APP_SECRET=...
+railway variables set META_PAGE_ACCESS_TOKEN=...
+railway variables set META_VERIFY_TOKEN=...
+railway variables set SENDGRID_API_KEY=...
+railway variables set SENDGRID_FROM_EMAIL=...
+railway variables set BRAND_VOICE_PROMPT="You are a helpful agent for..."
+```
+
+Railway gives you a permanent HTTPS URL (e.g. `https://yourapp.up.railway.app`). Use this as your webhook base URL in Meta and SendGrid.
+
+---
+
+### Readiness Checklist
+
+| Component | Ready when |
+|---|---|
+| Tests | Immediately — `uv run pytest` |
+| API server | `.env` filled + `docker compose up db -d` done |
+| FAQ knowledge base | `load_knowledge` script run |
+| Messenger | Meta App set up + webhook registered |
+| Instagram | Instagram Business account connected to Meta App |
+| Email | Deployed to production + SendGrid MX configured |
+
+---
+
+### Updating your FAQ
+
+When you want to change or add FAQ answers:
+
+1. Edit `data/faq.csv`
+2. Run: `uv run python -m app.scripts.load_knowledge`
+3. No server restart needed — ChromaDB is reloaded on next query
 
 ---
 
