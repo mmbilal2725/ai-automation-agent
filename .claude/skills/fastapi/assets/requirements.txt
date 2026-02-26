@@ -1,0 +1,31 @@
+# FastAPI Requirements Template
+# For basic FastAPI application with all standard dependencies
+fastapi[standard]
+
+# For database support (SQLModel includes SQLAlchemy and Pydantic)
+sqlmodel
+
+# For PostgreSQL
+# psycopg2-binary
+
+# For MySQL
+# pymysql
+
+# For authentication with JWT
+python-jose[cryptography]
+passlib[bcrypt]
+
+# For environment variables
+python-dotenv
+
+# For settings management
+pydantic-settings
+
+# For testing
+pytest
+httpx
+pytest-cov
+
+# For production server
+uvicorn[standard]
+gunicorn

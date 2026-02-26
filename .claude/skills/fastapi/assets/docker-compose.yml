@@ -1,0 +1,29 @@
+# FastAPI Docker Compose Template
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:80"
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/dbname
+      - SECRET_KEY=${SECRET_KEY}
+    depends_on:
+      - db
+    restart: unless-stopped
+    volumes:
+      - ./app:/code/app
+
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=dbname
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fastapi-config
+  namespace: production
+  labels:
+    app: fastapi
+data:
+  LOG_LEVEL: "info"
+  ENVIRONMENT: "production"
+  MAX_WORKERS: "4"
