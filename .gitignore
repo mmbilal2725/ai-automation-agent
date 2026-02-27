@@ -9,3 +9,7 @@ test.db
 *.egg-info/
 dist/
 .uv/
+.claude/
+.specify/
+notes.md
+CLAUDE.md
