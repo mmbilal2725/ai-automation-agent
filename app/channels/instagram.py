@@ -24,10 +24,6 @@ class InstagramAdapter(ChannelAdapter):
             if not secret:
                 continue
             computed = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
-            logger.info(
-                "Instagram sig — secret: %s | received: %s | computed: %s | match: %s",
-                secret[:8] + "...", expected[:16], computed[:16], computed == expected,
-            )
             if hmac.compare_digest(computed, expected):
                 return True
         return False

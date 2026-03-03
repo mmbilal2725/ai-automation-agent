@@ -29,10 +29,9 @@ async def instagram_webhook(request: Request, background_tasks: BackgroundTasks)
     body = await request.body()
     signature = request.headers.get("X-Hub-Signature-256", "")
 
-    # TODO: signature validation temporarily bypassed — Instagram signing mismatch under investigation
-    # if not adapter.validate_signature(body, signature):
-    #     logger.warning("Instagram webhook: invalid signature")
-    #     raise HTTPException(status_code=401, detail="Invalid signature")
+    if not adapter.validate_signature(body, signature):
+        logger.warning("Instagram webhook: invalid signature")
+        raise HTTPException(status_code=401, detail="Invalid signature")
 
     payload = await request.json()
     background_tasks.add_task(process_message, payload, "instagram", adapter)
