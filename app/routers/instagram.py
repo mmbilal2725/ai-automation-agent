@@ -29,8 +29,12 @@ async def instagram_webhook(request: Request, background_tasks: BackgroundTasks)
     body = await request.body()
     signature = request.headers.get("X-Hub-Signature-256", "")
 
+    logger.info("Instagram POST received. Signature header: '%s'", signature)
+
     if not adapter.validate_signature(body, signature):
-        logger.warning("Instagram webhook: invalid signature")
+        logger.warning(
+            "Instagram webhook: invalid signature. Header received: '%s'", signature
+        )
         raise HTTPException(status_code=401, detail="Invalid signature")
 
     payload = await request.json()
