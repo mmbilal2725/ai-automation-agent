@@ -23,6 +23,10 @@ class InstagramAdapter(ChannelAdapter):
         computed = hmac.new(
             secret.encode(), body, hashlib.sha256
         ).hexdigest()
+        logger.info(
+            "Instagram sig — secret_used: %s | received: %s | computed: %s | match: %s",
+            secret[:8] + "...", expected[:16], computed[:16], computed == expected,
+        )
         return hmac.compare_digest(computed, expected)
 
     def normalize(self, raw_payload: dict) -> list[Message]:
