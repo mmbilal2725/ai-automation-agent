@@ -7,6 +7,7 @@ class Settings(BaseSettings):
 
     # Meta (Messenger + Instagram)
     meta_app_secret: str
+    instagram_app_secret: str = ""
     meta_page_access_token: str
     meta_verify_token: str
 

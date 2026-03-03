@@ -19,13 +19,10 @@ class InstagramAdapter(ChannelAdapter):
         if not signature_header.startswith("sha256="):
             return False
         expected = signature_header[7:]
+        secret = settings.instagram_app_secret or settings.meta_app_secret
         computed = hmac.new(
-            settings.meta_app_secret.encode(), body, hashlib.sha256
+            secret.encode(), body, hashlib.sha256
         ).hexdigest()
-        logger.info(
-            "Instagram sig check — received: %s | computed: %s | match: %s",
-            expected, computed, computed == expected,
-        )
         return hmac.compare_digest(computed, expected)
 
     def normalize(self, raw_payload: dict) -> list[Message]:
