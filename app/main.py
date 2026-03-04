@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.database import init_db
-from app.routers import health, messenger, instagram, email as email_router
+from app.routers import health, messenger, instagram, email as email_router, whatsapp as whatsapp_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -25,7 +25,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="AI Customer Service Agent",
     version="1.0.0",
-    description="Handles Messenger, Instagram, and Email inquiries via RAG + LLM.",
+    description="Handles Messenger, Instagram, WhatsApp, and Email inquiries via RAG + LLM.",
     lifespan=lifespan,
 )
 
@@ -33,3 +33,4 @@ app.include_router(health.router, tags=["health"])
 app.include_router(messenger.router, tags=["messenger"])
 app.include_router(instagram.router, tags=["instagram"])
 app.include_router(email_router.router, tags=["email"])
+app.include_router(whatsapp_router.router, tags=["whatsapp"])

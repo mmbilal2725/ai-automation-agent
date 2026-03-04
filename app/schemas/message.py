@@ -10,7 +10,7 @@ class Message(BaseModel):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4)
     session_id: uuid.UUID | None = None
-    channel: Literal["messenger", "instagram", "email"]
+    channel: Literal["messenger", "instagram", "whatsapp", "email"]
     sender_id: str
     content: str
     raw_payload: dict = Field(default_factory=dict)

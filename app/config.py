@@ -10,6 +10,10 @@ class Settings(BaseSettings):
     meta_page_access_token: str
     meta_verify_token: str
 
+    # WhatsApp
+    whatsapp_phone_number_id: str = ""
+    whatsapp_access_token: str = ""
+
     # SendGrid (Email)
     sendgrid_api_key: str
     sendgrid_from_email: str = "support@example.com"
